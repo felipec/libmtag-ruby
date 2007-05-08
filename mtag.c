@@ -10,13 +10,14 @@ static VALUE rb_cMTag_File;
 
 struct file_data
 {
-	MTag_File *file;
+	VALUE tag;
+	MTag_File *c_file;
 };
 
 struct tag_data
 {
 	VALUE file;
-	MTag_Tag *tag;
+	MTag_Tag *c_tag;
 };
 
 static VALUE
@@ -38,11 +39,11 @@ rb_file_initialize (VALUE self,
 
 	c_file_name = rb_string_value_ptr (&file_name);
 
-	data->file = mtag_file_new (c_file_name);
+	data->c_file = mtag_file_new (c_file_name);
 
-	if (!data->file)
+	if (!data->c_file)
 	{
-		/** @todo raise exception. */
+		rb_raise (rb_eArgError, "Bad file '%s'", c_file_name);
 	}
 
 	return Qnil;
@@ -55,9 +56,7 @@ rb_file_finalize (VALUE self)
 
 	Data_Get_Struct (self, struct file_data, data);
 
-	printf ("%s\n", __FUNCTION__);
-
-	mtag_file_free (data->file);
+	mtag_file_free (data->c_file);
 
 	return Qnil;
 }
@@ -69,13 +68,15 @@ rb_file_tag (VALUE self)
 
 	Data_Get_Struct (self, struct file_data, data);
 
+	if (!data->tag)
 	{
 		VALUE args[1];
 		args[0] = self;
-		return rb_class_new_instance (1, args, rb_cMTag_Tag);
+		data->tag = rb_class_new_instance (1, args, rb_cMTag_Tag);
+		/* @todo unref */
 	}
 
-	return Qnil;
+	return data->tag;
 }
 
 static VALUE
@@ -85,7 +86,7 @@ rb_file_save (VALUE self)
 
 	Data_Get_Struct (self, struct file_data, data);
 
-	mtag_file_save(data->file);
+	mtag_file_save (data->c_file);
 
 	return Qnil;
 }
@@ -111,7 +112,40 @@ rb_tag_initialize (VALUE self,
 
 	Data_Get_Struct (file, struct file_data, file_data);
 
-	data->tag = mtag_file_tag (file_data->file);
+	data->c_tag = mtag_file_tag (file_data->c_file);
+
+	return Qnil;
+}
+
+static VALUE
+rb_tag_get (VALUE self,
+			VALUE key)
+{
+	struct tag_data *data;
+	char *c_key;
+
+	Data_Get_Struct (self, struct tag_data, data);
+
+	c_key = rb_string_value_ptr (&key);
+
+	return rb_str_new2 (mtag_tag_get (data->c_tag, c_key));
+}
+
+static VALUE
+rb_tag_set (VALUE self,
+			VALUE key,
+			VALUE value)
+{
+	struct tag_data *data;
+	char *c_key;
+	char *c_value;
+
+	Data_Get_Struct (self, struct tag_data, data);
+
+	c_key = rb_string_value_ptr (&key);
+	c_value = rb_string_value_ptr (&value);
+
+	mtag_tag_set (data->c_tag, c_key, c_value);
 
 	return Qnil;
 }
@@ -123,7 +157,7 @@ rb_tag_artist (VALUE self)
 
 	Data_Get_Struct (self, struct tag_data, data);
 
-	return rb_str_new2 (mtag_tag_get (data->tag, "artist"));
+	return rb_str_new2 (mtag_tag_get (data->c_tag, "artist"));
 }
 
 static VALUE
@@ -133,7 +167,7 @@ rb_tag_title (VALUE self)
 
 	Data_Get_Struct (self, struct tag_data, data);
 
-	return rb_str_new2 (mtag_tag_get (data->tag, "title"));
+	return rb_str_new2 (mtag_tag_get (data->c_tag, "title"));
 }
 
 static VALUE
@@ -147,7 +181,7 @@ rb_tag_set_title (VALUE self,
 
 	c_title = rb_string_value_ptr (&title);
 
-	mtag_tag_set (data->tag, "title", c_title);
+	mtag_tag_set (data->c_tag, "title", c_title);
 
 	return Qnil;
 }
@@ -163,7 +197,7 @@ rb_tag_set_artist (VALUE self,
 
 	c_artist = rb_string_value_ptr (&artist);
 
-	mtag_tag_set (data->tag, "artist", c_artist);
+	mtag_tag_set (data->c_tag, "artist", c_artist);
 
 	return Qnil;
 }
@@ -183,6 +217,8 @@ Init_libmtag ()
 
 	rb_define_alloc_func (rb_cMTag_Tag, rb_tag_alloc);
 	rb_define_method (rb_cMTag_Tag, "initialize", rb_tag_initialize, 1);
+	rb_define_method (rb_cMTag_Tag, "get", rb_tag_get, 1);
+	rb_define_method (rb_cMTag_Tag, "set", rb_tag_set, 2);
 	rb_define_method (rb_cMTag_Tag, "artist", rb_tag_artist, 0);
 	rb_define_method (rb_cMTag_Tag, "title", rb_tag_title, 0);
 	rb_define_method (rb_cMTag_Tag, "artist=", rb_tag_set_artist, 1);
