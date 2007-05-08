@@ -1,0 +1,8 @@
+== Build ==
+
+ruby extconf.rb
+make
+
+== Test ==
+
+ruby test.rb <filename>
