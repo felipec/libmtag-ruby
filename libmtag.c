@@ -80,6 +80,16 @@ rb_file_tag (VALUE self)
 }
 
 static VALUE
+rb_file_get_info (VALUE self)
+{
+	struct file_data *data;
+
+	Data_Get_Struct (self, struct file_data, data);
+
+	return rb_str_new2 (mtag_file_get_type (data->c_file));
+}
+
+static VALUE
 rb_file_save (VALUE self)
 {
 	struct file_data *data;
@@ -214,6 +224,7 @@ Init_libmtag ()
 	rb_define_method (rb_cMTag_File, "finalize", rb_file_finalize, 0);
 	rb_define_method (rb_cMTag_File, "save", rb_file_save, 0);
 	rb_define_method (rb_cMTag_File, "tag", rb_file_tag, 0);
+	rb_define_method (rb_cMTag_File, "get_info", rb_file_get_info, 0);
 
 	rb_define_alloc_func (rb_cMTag_Tag, rb_tag_alloc);
 	rb_define_method (rb_cMTag_Tag, "initialize", rb_tag_initialize, 1);
