@@ -143,6 +143,33 @@ rb_tag_initialize (VALUE self,
     return Qnil;
 }
 
+static void
+each_tag (const char *key,
+          const char *value,
+          void *user_data)
+{
+    if (!key || !value)
+	return;
+
+    /** @todo some items will be overwritten */
+    rb_hash_aset ((VALUE) user_data, rb_str_new2 (key), rb_str_new2 (value));
+}
+
+static VALUE
+rb_tag_get_all (VALUE self)
+{
+    struct tag_data *data;
+
+    Data_Get_Struct (self, struct tag_data, data);
+
+    {
+	VALUE hash;
+	hash = rb_hash_new ();
+	mtag_tag_for_each (data->c_tag, each_tag, (void *) hash);
+	return hash;
+    }
+}
+
 static VALUE
 rb_tag_get (VALUE self,
 	    VALUE key)
@@ -245,6 +272,7 @@ Init_mtag ()
 
     rb_define_alloc_func (rb_cMTag_Tag, rb_tag_alloc);
     rb_define_method (rb_cMTag_Tag, "initialize", rb_tag_initialize, 1);
+    rb_define_method (rb_cMTag_Tag, "get_all", rb_tag_get_all, 0);
     rb_define_method (rb_cMTag_Tag, "get", rb_tag_get, 1);
     rb_define_method (rb_cMTag_Tag, "set", rb_tag_set, 2);
     rb_define_method (rb_cMTag_Tag, "artist", rb_tag_artist, 0);
