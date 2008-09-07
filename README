@@ -6,3 +6,7 @@ make
 == Test ==
 
 ruby test.rb <filename>
+
+== Install ==
+
+sudo make install
