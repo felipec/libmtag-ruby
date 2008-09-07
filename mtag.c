@@ -80,13 +80,29 @@ rb_file_tag (VALUE self)
 }
 
 static VALUE
-rb_file_get_info (VALUE self)
+rb_file_get_info (VALUE self,
+		  VALUE tag_id)
 {
     struct file_data *data;
 
     Data_Get_Struct (self, struct file_data, data);
 
     return rb_str_new2 (mtag_file_get_type (data->c_file));
+}
+
+static VALUE
+rb_file_strip (VALUE self,
+	       VALUE tag_id)
+{
+    struct file_data *data;
+    const char *c_tag_id;
+
+    Data_Get_Struct (self, struct file_data, data);
+
+    c_tag_id = rb_string_value_ptr (&tag_id);
+    mtag_file_strip_tag (data->c_file, c_tag_id);
+
+    return Qnil;
 }
 
 static VALUE
@@ -225,6 +241,7 @@ Init_mtag ()
     rb_define_method (rb_cMTag_File, "save", rb_file_save, 0);
     rb_define_method (rb_cMTag_File, "tag", rb_file_tag, 0);
     rb_define_method (rb_cMTag_File, "get_info", rb_file_get_info, 0);
+    rb_define_method (rb_cMTag_File, "strip", rb_file_strip, 1);
 
     rb_define_alloc_func (rb_cMTag_Tag, rb_tag_alloc);
     rb_define_method (rb_cMTag_Tag, "initialize", rb_tag_initialize, 1);
