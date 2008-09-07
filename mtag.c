@@ -121,6 +121,15 @@ rb_file_hash (VALUE self,
 	/* @todo unref */
     }
 
+    {
+	struct tag_data *tmp;
+
+	Data_Get_Struct (data->tag, struct tag_data, tmp);
+
+	if (!tmp->c_tag)
+	    return Qnil;
+    }
+
     return data->tag;
 }
 
