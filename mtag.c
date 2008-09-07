@@ -62,7 +62,9 @@ rb_file_finalize (VALUE self)
 }
 
 static VALUE
-rb_file_tag (VALUE self)
+rb_file_tag (int argc,
+	     VALUE *argv,
+	     VALUE self)
 {
     struct file_data *data;
 
@@ -70,10 +72,20 @@ rb_file_tag (VALUE self)
 
     if (!data->tag)
     {
-	VALUE args[1];
+	VALUE args[3];
 	args[0] = self;
-	data->tag = rb_class_new_instance (1, args, rb_cMTag_Tag);
-	/* @todo unref */
+	if (argc == 0)
+	{
+	    data->tag = rb_class_new_instance (1, args, rb_cMTag_Tag);
+	    /* @todo unref */
+	}
+	else
+	{
+	    args[1] = argv[0];
+	    args[2] = (argc == 2 ? argv[1] : Qfalse);
+	    data->tag = rb_class_new_instance (3, args, rb_cMTag_Tag);
+	    /* @todo unref */
+	}
     }
 
     return data->tag;
@@ -117,7 +129,8 @@ rb_file_hash (VALUE self,
 	VALUE args[2];
 	args[0] = self;
 	args[1] = tag_id;
-	data->tag = rb_class_new_instance (2, args, rb_cMTag_Tag);
+	args[2] = Qfalse;
+	data->tag = rb_class_new_instance (3, args, rb_cMTag_Tag);
 	/* @todo unref */
     }
 
@@ -161,17 +174,20 @@ rb_tag_initialize (int argc,
     struct tag_data *data;
     struct file_data *file_data;
     const char *c_tag_id = NULL;
+    bool create = false;
 
     Data_Get_Struct (self, struct tag_data, data);
 
     data->file = argv[0];
     if (argc > 1)
 	c_tag_id = rb_string_value_ptr (&argv[1]);
+    if (argc > 2)
+	create = (argv[2] == Qtrue ? true : false);
 
     Data_Get_Struct (data->file, struct file_data, file_data);
 
     if (c_tag_id)
-	data->c_tag = mtag_file_get_tag (file_data->c_file, c_tag_id, false);
+	data->c_tag = mtag_file_get_tag (file_data->c_file, c_tag_id, create);
     else
 	data->c_tag = mtag_file_tag (file_data->c_file);
 
@@ -301,7 +317,7 @@ Init_mtag ()
     rb_define_method (rb_cMTag_File, "initialize", rb_file_initialize, 1);
     rb_define_method (rb_cMTag_File, "finalize", rb_file_finalize, 0);
     rb_define_method (rb_cMTag_File, "save", rb_file_save, 0);
-    rb_define_method (rb_cMTag_File, "tag", rb_file_tag, 0);
+    rb_define_method (rb_cMTag_File, "tag", rb_file_tag, -1);
     rb_define_method (rb_cMTag_File, "get_info", rb_file_get_info, 0);
     rb_define_method (rb_cMTag_File, "strip", rb_file_strip, 1);
     rb_define_method (rb_cMTag_File, "[]", rb_file_hash, 1);
