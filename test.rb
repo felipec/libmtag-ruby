@@ -1,4 +1,4 @@
-require 'libmtag'
+require 'mtag'
 
 def test_file(fn)
 	file = MTag::File.new(fn)

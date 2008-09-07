@@ -213,7 +213,7 @@ rb_tag_set_artist (VALUE self,
 }
 
 void
-Init_libmtag ()
+Init_mtag ()
 {
 	rb_mMTag = rb_define_module ("MTag");
 	rb_cMTag_File = rb_define_class_under (rb_mMTag, "File", rb_cObject);
