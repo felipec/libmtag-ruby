@@ -10,12 +10,12 @@ static VALUE rb_cMTag_File;
 
 struct file_data {
 	VALUE tag;
-	MTag_File *c_file;
+	mtag_file_t *c_file;
 };
 
 struct tag_data {
 	VALUE file;
-	MTag_Tag *c_tag;
+	mtag_tag_t *c_tag;
 };
 
 static VALUE
