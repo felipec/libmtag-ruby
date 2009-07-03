@@ -1,0 +1,15 @@
+= 0.3.0 =
+
+ * New strip tag method
+ * New get_all method
+ * Option to create a tag
+ * Option to fetch a specific tag
+ * Update to new API
+
+= 0.2.0 =
+
+ * New get_type method
+
+= 0.1.0 =
+
+ * Initial release
